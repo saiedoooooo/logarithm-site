@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوجاريزم | محاضرة تعريفية لطلاب معادلة الهندسة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0a1633;
+    --navy2:#0f1f46;
+    --teal:#19c2c9;
+    --teal2:#0ea5b5;
+    --gold:#f5b53d;
+    --gold2:#e89b1c;
+    --ink:#eaf2ff;
+    --muted:#9fb2d6;
+    --card:rgba(255,255,255,.06);
+    --line:rgba(255,255,255,.14);
+    --glow:0 0 60px rgba(25,194,201,.35);
+    --font:'Tajawal','Cairo',system-ui,'Segoe UI',Tahoma,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    background:radial-gradient(1200px 800px at 80% -10%,#16306b 0%,transparent 55%),
+               radial-gradient(900px 700px at 0% 110%,#0c2a52 0%,transparent 50%),
+               linear-gradient(160deg,#070f24 0%,#0a1633 55%,#0a1430 100%);
+    color:var(--ink);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== Deck ===== */
+  .deck{position:fixed;inset:0;}
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:6vh 7vw 11vh;
+    opacity:0;visibility:hidden;
+    transform:translateY(28px) scale(.985);
+    transition:opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1), visibility .55s;
+    text-align:center;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none;}
+  .slide.prev{transform:translateY(-28px) scale(.985);}
+
+  /* decorative log curve */
+  .bg-curve{position:absolute;inset:0;z-index:0;opacity:.16;pointer-events:none;overflow:hidden}
+  .bg-curve svg{position:absolute;width:120%;height:120%;right:-10%;top:-5%}
+  .slide > *{position:relative;z-index:1}
+
+  /* ===== Typography ===== */
+  .kicker{
+    display:inline-flex;align-items:center;gap:.5rem;
+    font-size:clamp(.8rem,1.6vw,1.05rem);font-weight:700;letter-spacing:.04em;
+    color:var(--teal);
+    background:rgba(25,194,201,.10);border:1px solid rgba(25,194,201,.35);
+    padding:.45rem 1.1rem;border-radius:100px;margin-bottom:1.6rem;
+  }
+  h1{font-size:clamp(2.2rem,6vw,4.6rem);font-weight:900;line-height:1.12;letter-spacing:-.01em}
+  h2{font-size:clamp(1.8rem,4.4vw,3.2rem);font-weight:800;line-height:1.18;margin-bottom:.6rem}
+  .lead{font-size:clamp(1.05rem,2.3vw,1.6rem);color:var(--muted);font-weight:400;line-height:1.7;max-width:60ch}
+  .grad{background:linear-gradient(100deg,var(--teal) 0%,#5ee7c0 45%,var(--gold) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .gold{color:var(--gold)}
+  .big-num{font-size:clamp(3.4rem,11vw,8rem);font-weight:900;line-height:1;background:linear-gradient(180deg,#fff, var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* ===== Brand mark ===== */
+  .brand{display:flex;align-items:center;gap:.7rem;font-weight:900;font-size:clamp(1.4rem,3.4vw,2.2rem);letter-spacing:.02em}
+  .brand .mk{
+    width:1.5em;height:1.5em;border-radius:.45em;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04222a;font-weight:900;
+    box-shadow:var(--glow);font-size:.7em;
+  }
+
+  /* ===== Cards / grids ===== */
+  .grid{display:grid;gap:1rem;width:100%;max-width:1050px;margin-top:2rem}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g5{grid-template-columns:repeat(5,1fr)}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:1.5rem 1.3rem;text-align:center;backdrop-filter:blur(6px);
+    transition:transform .3s, border-color .3s, background .3s;
+  }
+  .card:hover{transform:translateY(-6px);border-color:rgba(25,194,201,.55);background:rgba(25,194,201,.08)}
+  .card .ic{font-size:2rem;margin-bottom:.6rem}
+  .card h3{font-size:clamp(1rem,1.9vw,1.35rem);font-weight:800;margin-bottom:.35rem}
+  .card p{font-size:clamp(.85rem,1.5vw,1.02rem);color:var(--muted);line-height:1.6}
+
+  /* clickable choice cards */
+  .choice{cursor:pointer;position:relative}
+  .choice.picked{border-color:var(--gold);background:rgba(245,181,61,.12);transform:translateY(-6px)}
+  .choice.picked::after{content:"✓";position:absolute;top:.6rem;left:.8rem;color:var(--gold);font-weight:900}
+
+  .reveal-line{
+    margin-top:1.8rem;font-size:clamp(1.1rem,2.4vw,1.7rem);font-weight:700;color:var(--gold);
+    opacity:0;transform:translateY(10px);transition:.6s;min-height:1.2em
+  }
+  .reveal-line.show{opacity:1;transform:none}
+
+  /* objection rows */
+  .obj{max-width:1000px;width:100%;display:flex;flex-direction:column;gap:1rem;margin-top:1.6rem}
+  .obj .row{display:grid;grid-template-columns:1fr 1.3fr;gap:1rem;align-items:stretch}
+  .obj .fear{background:rgba(255,99,99,.10);border:1px solid rgba(255,120,120,.35);border-radius:16px;padding:1.1rem 1.3rem;text-align:right;display:flex;align-items:center;gap:.7rem;font-weight:700}
+  .obj .ans{background:rgba(25,194,201,.10);border:1px solid rgba(25,194,201,.4);border-radius:16px;padding:1.1rem 1.3rem;text-align:right;color:var(--ink);display:flex;align-items:center;gap:.7rem}
+
+  /* roadmap */
+  .road{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:wrap;margin-top:2rem;max-width:1100px}
+  .step{position:relative;flex:1 1 0;min-width:150px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.3rem 1rem;margin:.4rem;text-align:center}
+  .step .n{width:2.2rem;height:2.2rem;border-radius:50%;display:grid;place-items:center;margin:0 auto .6rem;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04222a;font-weight:900}
+  .step.win{background:linear-gradient(135deg,rgba(245,181,61,.18),rgba(245,181,61,.06));border-color:var(--gold)}
+  .step.win .n{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#3a2600}
+  .step h4{font-size:1.05rem;font-weight:800;margin-bottom:.3rem}
+  .step p{font-size:.85rem;color:var(--muted);line-height:1.5}
+
+  .pill-row{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center;margin-top:1.8rem;max-width:900px}
+  .pill{background:var(--card);border:1px solid var(--line);border-radius:100px;padding:.7rem 1.3rem;font-weight:600;font-size:clamp(.9rem,1.7vw,1.1rem)}
+
+  .quote{background:var(--card);border:1px solid var(--line);border-right:4px solid var(--teal);border-radius:14px;padding:1.4rem 1.5rem;text-align:right}
+  .quote p{font-size:1.05rem;line-height:1.7;margin-bottom:.7rem}
+  .quote .who{color:var(--teal);font-weight:700;font-size:.95rem}
+
+  .note{margin-top:1.3rem;font-size:.9rem;color:var(--gold);background:rgba(245,181,61,.08);border:1px dashed rgba(245,181,61,.5);border-radius:10px;padding:.6rem 1rem;max-width:70ch}
+
+  .cta-box{background:linear-gradient(135deg,rgba(25,194,201,.16),rgba(245,181,61,.10));border:1px solid rgba(25,194,201,.45);border-radius:22px;padding:2rem 2.4rem;max-width:760px;margin-top:1.6rem;box-shadow:var(--glow)}
+  .cta-box .lead{color:var(--ink)}
+
+  .two-path{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;max-width:1000px;width:100%;margin-top:2rem}
+  .path{border-radius:18px;padding:1.6rem;text-align:right}
+  .path.in{background:rgba(25,194,201,.10);border:1px solid rgba(25,194,201,.4)}
+  .path.out{background:rgba(245,181,61,.10);border:1px solid rgba(245,181,61,.45)}
+  .path h3{font-size:1.3rem;font-weight:800;margin-bottom:.8rem}
+  .path ul{list-style:none;display:flex;flex-direction:column;gap:.6rem}
+  .path li{display:flex;gap:.6rem;align-items:flex-start;color:var(--muted);line-height:1.6}
+  .path li::before{content:"›";color:var(--teal);font-weight:900;font-size:1.2rem;line-height:1}
+
+  /* ===== Chrome (nav/progress) ===== */
+  .progress{position:fixed;top:0;right:0;height:4px;background:linear-gradient(90deg,var(--teal),var(--gold));width:0;z-index:50;transition:width .4s}
+  .hud{position:fixed;bottom:0;right:0;left:0;display:flex;align-items:center;justify-content:space-between;padding:1rem 1.6rem;z-index:40;pointer-events:none}
+  .hud .left{display:flex;gap:.6rem;pointer-events:auto}
+  .btn{pointer-events:auto;cursor:pointer;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);width:46px;height:46px;border-radius:12px;font-size:1.3rem;display:grid;place-items:center;transition:.25s;backdrop-filter:blur(6px)}
+  .btn:hover{background:var(--teal);color:#042;border-color:var(--teal);transform:translateY(-2px)}
+  .counter{pointer-events:auto;font-weight:700;color:var(--muted);font-size:.95rem;background:rgba(0,0,0,.25);padding:.45rem 1rem;border-radius:100px;border:1px solid var(--line)}
+  .counter b{color:var(--ink)}
+  .mini-brand{position:fixed;top:1rem;right:1.6rem;z-index:40;font-weight:900;font-size:1.05rem;display:flex;align-items:center;gap:.5rem;opacity:.85}
+  .mini-brand .mk{width:1.6em;height:1.6em;border-radius:.4em;display:grid;place-items:center;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04222a;font-size:.7em;font-weight:900}
+  .hint{position:fixed;bottom:1.15rem;left:50%;transform:translateX(50%);color:var(--muted);font-size:.8rem;z-index:40;opacity:.7}
+
+  /* dots */
+  .dots{display:flex;gap:.4rem;pointer-events:auto;flex-wrap:wrap;max-width:40vw;justify-content:flex-end}
+  .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:.25s}
+  .dot.active{background:var(--teal);transform:scale(1.35)}
+
+  .fade-up{opacity:0;transform:translateY(18px)}
+  .active .fade-up{animation:fadeUp .7s forwards}
+  .active .d1{animation-delay:.12s}.active .d2{animation-delay:.24s}.active .d3{animation-delay:.36s}.active .d4{animation-delay:.48s}.active .d5{animation-delay:.6s}
+  @keyframes fadeUp{to{opacity:1;transform:none}}
+
+  @media(max-width:760px){
+    .g3,.g4,.g5{grid-template-columns:repeat(2,1fr)}
+    .two-path,.obj .row{grid-template-columns:1fr}
+    .road .step{flex:1 1 40%}
+    .dots{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="mini-brand"><span class="mk">log</span><span>لوجاريزم</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide active">
+    <div class="bg-curve"><svg viewBox="0 0 600 400" preserveAspectRatio="none"><path d="M20,360 C120,360 150,80 580,40" fill="none" stroke="#19c2c9" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div class="brand fade-up d1"><span class="mk">log</span><span>لوجاريزم</span></div>
+    <h1 class="fade-up d2" style="margin-top:1.4rem">رحلتك من <span class="grad">المعادلة</span><br>لكلية الهندسة بتبدأ من هنا</h1>
+    <p class="lead fade-up d3" style="margin-top:1.4rem">محاضرة تعريفية لطلاب معادلة كلية الهندسة</p>
+    <div class="pill-row fade-up d4">
+      <span class="pill">👨‍🏫 〔اسم المحاضر〕 — صاحب الأكاديمية</span>
+      <span class="pill">🎓 معادلة هندسة</span>
+      <span class="pill">💻 أونلاين بالعربي والإنجليزي</span>
+    </div>
+  </section>
+
+  <!-- 2 — OPENING QUESTION (interactive) -->
+  <section class="slide">
+    <div class="kicker fade-up d1">⏳ قبل ما نبدأ… سؤال واحد</div>
+    <h2 class="fade-up d2">إنت ناوي على إيه من دراسة المعادلة؟</h2>
+    <p class="lead fade-up d3">دوس على اللي قريب منك… مفيش إجابة غلط.</p>
+    <div class="grid g4 fade-up d4" id="intentGrid">
+      <div class="card choice" onclick="pick(this)"><div class="ic">🛠️</div><h3>أبقى مهندس</h3></div>
+      <div class="card choice" onclick="pick(this)"><div class="ic">🔁</div><h3>أكمّل اللي بدأته</h3></div>
+      <div class="card choice" onclick="pick(this)"><div class="ic">💪</div><h3>أثبت لنفسي إني أقدر</h3></div>
+      <div class="card choice" onclick="pick(this)"><div class="ic">🚀</div><h3>مستقبل أحسن</h3></div>
+    </div>
+    <div class="reveal-line" id="intentReveal">خليك فاكر إجابتك كويس… هنرجعلها في الآخر 😉</div>
+  </section>
+
+  <!-- 3 — REFRAME -->
+  <section class="slide">
+    <div class="kicker fade-up d1">إجابتك مهمة</div>
+    <h2 class="fade-up d2">أيًّا كانت نيتك… كلها بتوديك<br>لنفس المكان</h2>
+    <h1 class="grad fade-up d3" style="margin-top:1rem">إنك تبقى مهندس.</h1>
+    <p class="lead fade-up d4" style="margin-top:1.2rem">والمعادلة هي <b class="gold">البوابة</b> — وأنا هنا عشان أمسك إيدك وأوصّلك لحد ما تعدّيها.</p>
+  </section>
+
+  <!-- 4 — WHO AM I -->
+  <section class="slide">
+    <div class="kicker fade-up d1">تعارف سريع</div>
+    <h2 class="fade-up d2">أنا مين… وإيه هي لوجاريزم؟</h2>
+    <div class="grid g3 fade-up d3">
+      <div class="card"><div class="ic">👨‍🏫</div><h3>〔اسمك〕</h3><p>مدرّس الرياضة وصاحب أكاديمية لوجاريزم</p></div>
+      <div class="card"><div class="ic">📐</div><h3>متخصّص في المعادلة</h3><p>مش بدرّس أي حاجة — متخصّص في طلاب معادلة الهندسة بالذات</p></div>
+      <div class="card"><div class="ic">💻</div><h3>أكاديمية أونلاين</h3><p>تعليم منظّم توصلك في أي مكان، بمتابعة حقيقية مش مجرد فيديوهات</p></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.6rem">أنا مش جاي أبيعلك كلام… جاي أوريك <span class="gold">نتايج</span>.</p>
+  </section>
+
+  <!-- 5 — NUMBERS -->
+  <section class="slide">
+    <div class="kicker fade-up d1">📊 لوجاريزم في أرقام</div>
+    <h2 class="fade-up d2">النتايج بتتكلم لوحدها</h2>
+    <div class="grid g3 fade-up d3" style="margin-top:1.4rem">
+      <div class="card"><div class="big-num" data-count="50">0</div><p style="margin-top:.4rem">طالب ناجح في <b class="gold">2024</b></p></div>
+      <div class="card"><div class="big-num" data-count="60">0</div><p style="margin-top:.4rem">طالب ناجح في <b class="gold">2025</b></p></div>
+      <div class="card"><div class="big-num" data-count="20" data-suffix="%+">0</div><p style="margin-top:.4rem">نمو في عدد الناجحين<br>في سنة واحدة</p></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.6rem">والرقم بيكبر كل سنة… عشان الطريقة <span class="gold">شغّالة</span>.</p>
+  </section>
+
+  <!-- 6 — USP -->
+  <section class="slide">
+    <div class="kicker fade-up d1">⭐ اللي بيميّزنا عن أي حد</div>
+    <h2 class="fade-up d2">المكان <span class="grad">الوحيد</span> في مصر اللي بيدرّس<br>مواد المعادلة بالعربي <span class="gold">و</span> الإنجليزي</h2>
+    <div class="grid g3 fade-up d3" style="margin-top:1.4rem">
+      <div class="card"><div class="ic">🧠</div><h3>تفهم بلغتك</h3><p>الشرح بالعربي عشان المعلومة تتثبّت في دماغك صح</p></div>
+      <div class="card"><div class="ic">🌍</div><h3>تتقن المصطلح</h3><p>نفس المادة بالإنجليزي — اللي هتلاقيه في الكلية وفي الشغل بعدين</p></div>
+      <div class="card"><div class="ic">🏆</div><h3>تسبق زمايلك</h3><p>هتدخل الكلية وإنت متعوّد على اللغة، مش هتتصدم زي غيرك</p></div>
+    </div>
+  </section>
+
+  <!-- 7 — WHO IS THIS FOR -->
+  <section class="slide">
+    <div class="kicker fade-up d1">المعادلة لمين؟</div>
+    <h2 class="fade-up d2">إنت في المكان الصح لو إنت من…</h2>
+    <div class="grid g5 fade-up d3">
+      <div class="card"><div class="ic">🔧</div><h3>دبلوم صنايع<br>٣ سنين</h3></div>
+      <div class="card"><div class="ic">⚙️</div><h3>دبلوم صنايع<br>٥ سنين</h3></div>
+      <div class="card"><div class="ic">🖥️</div><h3>تكنولوجيا<br>تطبيقية</h3></div>
+      <div class="card"><div class="ic">🏭</div><h3>معهد فني<br>صناعي</h3></div>
+      <div class="card"><div class="ic">🏥</div><h3>معهد فني<br>صحي</h3></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.6rem">مهما كانت بدايتك… الطريق لقدّام واحد.</p>
+  </section>
+
+  <!-- 8 — WHAT IS EQUIVALENCY -->
+  <section class="slide">
+    <div class="kicker fade-up d1">نبسّطها</div>
+    <h2 class="fade-up d2">يعني إيه «معادلة هندسة»؟</h2>
+    <p class="lead fade-up d3" style="margin-top:.4rem">المعادلة = <b class="gold">جسر</b> بيوصّلك من شهادة الدبلوم لمستوى كلية الهندسة.</p>
+    <div class="grid g3 fade-up d4" style="margin-top:1.6rem">
+      <div class="card"><div class="ic">📜</div><h3>بتثبت إنك مؤهّل</h3><p>إنك قادر تكمّل دراسة هندسية زي أي طالب</p></div>
+      <div class="card"><div class="ic">🌉</div><h3>بتسدّ الفجوة</h3><p>المواد الأساسية اللي محتاجها قبل ما تبدأ التخصّص</p></div>
+      <div class="card"><div class="ic">✅</div><h3>سهلة لو اتدرست صح</h3><p>مش مستحيلة — محتاجة بس خطة وطريقة مظبوطة</p></div>
+    </div>
+  </section>
+
+  <!-- 9 — SUBJECTS -->
+  <section class="slide">
+    <div class="kicker fade-up d1">المواد ونظام الامتحان</div>
+    <h2 class="fade-up d2">٤ مواد… وإحنا معانا مفاتيحها</h2>
+    <div class="grid g4 fade-up d3">
+      <div class="card"><div class="ic">➗</div><h3>الرياضيات</h3><p>Mathematics</p></div>
+      <div class="card"><div class="ic">🧲</div><h3>الفيزياء</h3><p>Physics</p></div>
+      <div class="card"><div class="ic">⚗️</div><h3>الكيمياء</h3><p>Chemistry</p></div>
+      <div class="card"><div class="ic">🔤</div><h3>الإنجليزي</h3><p>English</p></div>
+    </div>
+    <div class="note fade-up d4">〔عدّل هنا حسب جامعتك: عدد المواد، توزيع الدرجات، النجاح المطلوب، مواعيد الامتحانات〕</div>
+  </section>
+
+  <!-- 10 — FEARS INTRO -->
+  <section class="slide">
+    <div class="kicker fade-up d1">🗣️ نتكلم بصراحة</div>
+    <h2 class="fade-up d2">عارف إيه اللي في دماغك دلوقتي…</h2>
+    <div class="grid g4 fade-up d3">
+      <div class="card"><div class="ic">😰</div><h3>المواد صعبة</h3><p>«وممكن أرسب»</p></div>
+      <div class="card"><div class="ic">💻</div><h3>الأونلاين</h3><p>«هينفع فعلاً؟»</p></div>
+      <div class="card"><div class="ic">⏰</div><h3>الوقت</h3><p>«مش هعرف أنظّم»</p></div>
+      <div class="card"><div class="ic">💸</div><h3>التكلفة</h3><p>«تستاهل ولا لأ؟»</p></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.5rem">تعالى نرد على كل واحدة فيهم… بصراحة.</p>
+  </section>
+
+  <!-- 11 — FEAR 1 -->
+  <section class="slide">
+    <div class="kicker fade-up d1" style="color:#ff8a8a;background:rgba(255,99,99,.1);border-color:rgba(255,120,120,.4)">الخوف رقم ١</div>
+    <h2 class="fade-up d2">«المواد صعبة وممكن أرسب»</h2>
+    <div class="obj fade-up d3">
+      <div class="row"><div class="fear">😰 مستواي في المواد دي ضعيف</div><div class="ans">✅ بنبدأ معاك من <b>الصفر</b> — تأسيس قبل أي حاجة</div></div>
+      <div class="row"><div class="fear">😰 مش فاهم من المدرّسين</div><div class="ans">✅ شرح <b>خطوة بخطوة</b> بالعربي + الإنجليزي لحد ما توصل</div></div>
+      <div class="row"><div class="fear">😰 محدش بيتابعني</div><div class="ans">✅ <b>متابعة فردية</b> — إحنا بنعرف كل طالب وضعه فين</div></div>
+    </div>
+  </section>
+
+  <!-- 12 — FEAR 2 -->
+  <section class="slide">
+    <div class="kicker fade-up d1" style="color:#ff8a8a;background:rgba(255,99,99,.1);border-color:rgba(255,120,120,.4)">الخوف رقم ٢</div>
+    <h2 class="fade-up d2">«الأونلاين هينفع فعلاً؟»</h2>
+    <div class="grid g3 fade-up d3">
+      <div class="card"><div class="ic">🏅</div><h3>النتايج أونلاين</h3><p>الـ٥٠ والـ٦٠ ناجح… كلهم اتعلّموا أونلاين معانا</p></div>
+      <div class="card"><div class="ic">🔁</div><h3>تسجيلات تتعاد</h3><p>فاتتك حصة أو مش فاهم؟ ارجعلها في أي وقت</p></div>
+      <div class="card"><div class="ic">📲</div><h3>متابعة حقيقية</h3><p>واجبات، تصحيح، وردود على أسئلتك — مش فيديو وسلام</p></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.4rem">الأونلاين مش أضعف… <span class="gold">أقوى</span> لو اتعمل صح.</p>
+  </section>
+
+  <!-- 13 — FEAR 3 -->
+  <section class="slide">
+    <div class="kicker fade-up d1" style="color:#ff8a8a;background:rgba(255,99,99,.1);border-color:rgba(255,120,120,.4)">الخوف رقم ٣</div>
+    <h2 class="fade-up d2">«مش هلاقي وقت ولا هعرف أنظّم»</h2>
+    <div class="grid g3 fade-up d3">
+      <div class="card"><div class="ic">🗓️</div><h3>خطة جاهزة</h3><p>مش هتقعد تفكّر تذاكر إيه — إحنا مرتّبينلك كل أسبوع</p></div>
+      <div class="card"><div class="ic">⏱️</div><h3>مرونة المواعيد</h3><p>تذاكر في وقتك، والتسجيلات متاحة دايمًا</p></div>
+      <div class="card"><div class="ic">🔔</div><h3>تذكير ومتابعة</h3><p>منسيبكش تأجّل — بنفكّرك ونشدّك لقدّام</p></div>
+    </div>
+  </section>
+
+  <!-- 14 — FEAR 4 -->
+  <section class="slide">
+    <div class="kicker fade-up d1" style="color:#ff8a8a;background:rgba(255,99,99,.1);border-color:rgba(255,120,120,.4)">الخوف رقم ٤</div>
+    <h2 class="fade-up d2">«التكلفة… تستاهل؟»</h2>
+    <p class="lead fade-up d3">ده مش مصروف… ده <b class="gold">استثمار</b> في إنك تبقى مهندس طول عمرك.</p>
+    <div class="grid g3 fade-up d4" style="margin-top:1.4rem">
+      <div class="card"><div class="ic">🎯</div><h3>قيمة مقابل سعر</h3><p>تأسيس + شرح + متابعة + مراجعات + امتحانات — حزمة كاملة</p></div>
+      <div class="card"><div class="ic">🧾</div><h3>بدل ٤ مدرّسين</h3><p>كل موادك في مكان واحد منظّم بدل ما تدفع لكذا حد</p></div>
+      <div class="card"><div class="ic">🛡️</div><h3>أمان على فلوسك</h3><p>بتدفع لمكان ليه نتايج وسمعة، مش مغامرة</p></div>
+    </div>
+    <div class="note fade-up d5">〔اكتب هنا الباقات/الأسعار أو العرض الخاص لو حابب تعرضه على الشريحة〕</div>
+  </section>
+
+  <!-- 15 — ROADMAP -->
+  <section class="slide">
+    <div class="kicker fade-up d1">🗺️ خريطة الطريق</div>
+    <h2 class="fade-up d2">من أول يوم… لحد ما تنجح</h2>
+    <div class="road fade-up d3">
+      <div class="step"><div class="n">١</div><h4>تأسيس</h4><p>نبني الأساس من الصفر</p></div>
+      <div class="step"><div class="n">٢</div><h4>شرح متقدّم</h4><p>المنهج كامل بالعربي والإنجليزي</p></div>
+      <div class="step"><div class="n">٣</div><h4>تطبيق ومسائل</h4><p>نحلّ كتير لحد ما تتقن</p></div>
+      <div class="step"><div class="n">٤</div><h4>مراجعات مكثّفة</h4><p>نلمّ كل حاجة قبل الامتحان</p></div>
+      <div class="step"><div class="n">٥</div><h4>امتحانات تجريبية</h4><p>تدخل الامتحان واثق</p></div>
+      <div class="step win"><div class="n">🎓</div><h4>النجاح</h4><p>أهلاً بيك في الهندسة</p></div>
+    </div>
+  </section>
+
+  <!-- 16 — FOLLOW-UP SYSTEM -->
+  <section class="slide">
+    <div class="kicker fade-up d1">إزاي بنتابعك؟</div>
+    <h2 class="fade-up d2">نظام لوجاريزم في أسبوعك</h2>
+    <div class="grid g4 fade-up d3">
+      <div class="card"><div class="ic">🎥</div><h3>حصص مباشرة</h3><p>+ تسجيلات تتعاد</p></div>
+      <div class="card"><div class="ic">📝</div><h3>واجبات وتصحيح</h3><p>تطبيق بعد كل حصة</p></div>
+      <div class="card"><div class="ic">📊</div><h3>امتحانات دورية</h3><p>تعرف مستواك أول بأول</p></div>
+      <div class="card"><div class="ic">🤝</div><h3>دعم ومتابعة</h3><p>مجموعة + متابعة فردية</p></div>
+    </div>
+    <p class="lead fade-up d4" style="margin-top:1.5rem">إنت مش لوحدك في الرحلة دي… ولا لحظة.</p>
+  </section>
+
+  <!-- 17 — TESTIMONIALS -->
+  <section class="slide">
+    <div class="kicker fade-up d1">💬 اللي قبلك بيقولوا إيه</div>
+    <h2 class="fade-up d2">قصص نجاح حقيقية</h2>
+    <div class="grid g3 fade-up d3" style="margin-top:1rem">
+      <div class="quote"><p>"〔اكتب هنا رأي طالب ناجح — جملة قصيرة مؤثرة〕"</p><div class="who">— 〔اسم الطالب / دفعة 2025〕</div></div>
+      <div class="quote"><p>"〔رأي تاني — يفضّل يتكلم عن خوفه في الأول وإزاي اتغيّر〕"</p><div class="who">— 〔اسم الطالب〕</div></div>
+      <div class="quote"><p>"〔رأي تالت — يفضّل من ولي أمر〕"</p><div class="who">— 〔ولي أمر طالب〕</div></div>
+    </div>
+    <div class="note fade-up d4">نصيحة: حُط صور سكرين أو فيديو قصير لو متاح — ده بيكسر أي شك فورًا.</div>
+  </section>
+
+  <!-- 18 — PARENTS -->
+  <section class="slide">
+    <div class="kicker fade-up d1">👨‍👩‍👦 كلمة من القلب</div>
+    <h2 class="fade-up d2">رسالة لكل أب وأم في القاعة</h2>
+    <div class="grid g2 fade-up d3" style="max-width:900px">
+      <div class="card" style="text-align:right"><div class="ic">🔎</div><h3>شفافية كاملة</h3><p>هتعرفوا ابنكم واصل لفين أول بأول — مفيش حاجة مخبّية</p></div>
+      <div class="card" style="text-align:right"><div class="ic">📈</div><h3>تقارير متابعة</h3><p>تقارير عن الحضور والمستوى والامتحانات</p></div>
+      <div class="card" style="text-align:right"><div class="ic">🤝</div><h3>إحنا شركاء</h3><p>هدفنا واحد: إن ابنكم يبقى مهندس</p></div>
+      <div class="card" style="text-align:right"><div class="ic">🛡️</div><h3>استثمار آمن</h3><p>بتسلّموه لمكان ليه نتايج واسم وسمعة</p></div>
+    </div>
+  </section>
+
+  <!-- 19 — COMMITMENT -->
+  <section class="slide">
+    <div class="kicker fade-up d1">✋ تعهّد لوجاريزم</div>
+    <h2 class="fade-up d2">إحنا بنوعدك…</h2>
+    <div class="pill-row fade-up d3">
+      <span class="pill">✅ نلتزم بالخطة من أول يوم لآخر يوم</span>
+      <span class="pill">✅ نتابعك إنت بالذات مش رقم في زحمة</span>
+      <span class="pill">✅ منسيبكش لحد ما توصل خط النهاية</span>
+      <span class="pill">✅ نشرحلك لحد ما تفهم… مهما اتأخرت</span>
+    </div>
+    <div class="note fade-up d4">〔لو عندك ضمان رسمي — مثلاً «إعادة مجانية لو…» — اكتبه هنا، بيقوّي الثقة جدًا〕</div>
+  </section>
+
+  <!-- 20 — DUAL CTA / NEXT STEPS -->
+  <section class="slide">
+    <div class="kicker fade-up d1">🚦 الخطوات اللي بعد كده</div>
+    <h2 class="fade-up d2">طريقك واضح من دلوقتي</h2>
+    <div class="two-path fade-up d3">
+      <div class="path in">
+        <h3>✅ لو إنت مشترك معانا</h3>
+        <ul>
+          <li>اطمن تمامًا — إنت في إيد أمينة وعلى الطريق الصح</li>
+          <li>الخطوة الجاية: 〔أول حصة / تأسيس / مجموعة المتابعة〕</li>
+          <li>التزم بالخطة وإحنا ضامنينلك الباقي</li>
+        </ul>
+      </div>
+      <div class="path out">
+        <h3>🚀 لو لسه مكملتش الاشتراك</h3>
+        <ul>
+          <li>ده وقت القرار — مكانك محجوزلك معانا</li>
+          <li>الخطوة الجاية: 〔التسجيل / حصة تجريبية مجانية〕</li>
+          <li>متفوّتش دفعة بدأت وتفضل تجري وراها</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 21 — OFFER / REGISTER -->
+  <section class="slide">
+    <div class="kicker fade-up d1">🎁 خطوتك دلوقتي</div>
+    <h2 class="fade-up d2">انضم لدفعة لوجاريزم الجديدة</h2>
+    <div class="cta-box fade-up d3">
+      <p class="lead">احجز مكانك أو جرّب حصة مجانية وشوف الفرق بنفسك.</p>
+      <div class="pill-row" style="margin-top:1rem">
+        <span class="pill">🎟️ حصة تجريبية مجانية</span>
+        <span class="pill">⏳ عرض خاص لأول 〔عدد〕 يسجّلوا</span>
+        <span class="pill">📞 〔رقم التواصل / اللينك〕</span>
+      </div>
+    </div>
+    <div class="note fade-up d4">〔عدّل العرض والوسيلة حسب اللي هتقدّمه فعلاً — خلي فيه إحساس بالإلحاح المحترم〕</div>
+  </section>
+
+  <!-- 22 — CLOSING -->
+  <section class="slide">
+    <div class="bg-curve"><svg viewBox="0 0 600 400" preserveAspectRatio="none"><path d="M20,360 C120,360 150,80 580,40" fill="none" stroke="#f5b53d" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div class="kicker fade-up d1">افتكرت سؤالي الأول؟</div>
+    <h1 class="fade-up d2">نيتك كانت إيه؟</h1>
+    <h2 class="grad fade-up d3" style="margin-top:1rem">خلينا نحققها مع بعض.</h2>
+    <div class="brand fade-up d4" style="margin-top:2rem"><span class="mk">log</span><span>لوجاريزم</span></div>
+    <p class="lead fade-up d5" style="margin-top:1rem">شكرًا إنكم وثقتوا تبدأوا الرحلة من هنا 🤍 — 〔رقم/لينك التواصل〕</p>
+  </section>
+
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="left">
+    <button class="btn" id="prev" aria-label="السابق">›</button>
+    <button class="btn" id="next" aria-label="التالي">‹</button>
+  </div>
+  <div class="counter"><b id="cur">1</b> / <span id="tot">22</span></div>
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const prog = document.getElementById('prog');
+  const cur = document.getElementById('cur');
+  document.getElementById('tot').textContent = slides.length;
+
+  // dots
+  const dotsWrap = document.getElementById('dots');
+  slides.forEach((_,k)=>{
+    const d=document.createElement('div');d.className='dot';d.onclick=()=>go(k);dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(document.querySelectorAll('.dot'));
+
+  function go(n){
+    n=Math.max(0,Math.min(slides.length-1,n));
+    if(n===i) return;
+    const goingForward = n>i;
+    slides[i].classList.remove('active');
+    slides[i].classList.toggle('prev', goingForward);
+    i=n;
+    slides.forEach((s,k)=>{
+      s.classList.toggle('active',k===i);
+      if(k!==i && k!==i-1) s.classList.remove('prev');
+    });
+    slides[i].classList.remove('prev');
+    prog.style.width = ((i)/(slides.length-1))*100 + '%';
+    cur.textContent = i+1;
+    dots.forEach((d,k)=>d.classList.toggle('active',k===i));
+    triggerCounters(slides[i]);
+  }
+  function nextS(){go(i+1)}
+  function prevS(){go(i-1)}
+
+  // NOTE: dir=rtl so "›" points to previous visually; map intuitively
+  document.getElementById('next').onclick = nextS;
+  document.getElementById('prev').onclick = prevS;
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft'||e.key===' '||e.key==='PageDown') nextS();
+    if(e.key==='ArrowRight'||e.key==='PageUp') prevS();
+    if(e.key==='Home') go(0);
+    if(e.key==='End') go(slides.length-1);
+    if(e.key.toLowerCase()==='f'){ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }
+  });
+
+  // swipe (touch)
+  let sx=null;
+  document.addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50){ if(dx<0) prevS(); else nextS(); } sx=null;
+  },{passive:true});
+
+  // interactive intent picker
+  window.pick = function(el){
+    document.querySelectorAll('#intentGrid .choice').forEach(c=>c.classList.remove('picked'));
+    el.classList.add('picked');
+    document.getElementById('intentReveal').classList.add('show');
+  }
+
+  // animated counters
+  function triggerCounters(slide){
+    slide.querySelectorAll('.big-num[data-count]').forEach(el=>{
+      if(el.dataset.done)return; el.dataset.done='1';
+      const target=+el.dataset.count, suf=el.dataset.suffix||'';
+      let n=0; const step=Math.max(1,Math.round(target/45));
+      const t=setInterval(()=>{n+=step; if(n>=target){n=target;clearInterval(t);} el.textContent=n+suf;},22);
+    });
+  }
+
+  // init
+  prog.style.width='0%';
+  triggerCounters(slides[0]);
+</script>
+</body>
+</html>
